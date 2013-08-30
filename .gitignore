@@ -1,0 +1,8 @@
+data/
+*.iml
+.DS_Store
+_perso/
+target/
+logs/
+src/main/resources/frwiki*
+
