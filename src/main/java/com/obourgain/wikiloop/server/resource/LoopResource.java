@@ -27,11 +27,13 @@ public class LoopResource extends ServerResource {
         cpt++;
         log.info(cpt+":Get(raw):" + start);
         String decodedPage = URLDecoder.decode(start, "UTF-8");
-        log.info(cpt+":Get:" + decodedPage);
+        log.info(cpt+":***Get:" + decodedPage);
         Loop wikiLoop = Loop.get();
 
         Gson gson = new Gson();
         List<Page> loop = wikiLoop.loop(decodedPage);
+
+        if (loop.size() == 0) log.debug("Aucun résultat");
         for (Page p : loop) {
             log.debug(cpt+":Res:" + p);
         }

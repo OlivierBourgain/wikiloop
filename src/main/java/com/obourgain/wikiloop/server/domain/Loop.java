@@ -17,12 +17,11 @@ public class Loop {
     private Loop() {
     }
 
-    ;
-
     public static Loop get() {
         if (instance == null) {
             Loop w = new Loop();
-            w.init("/frwiki-20130819-successeur.txt");
+            String fileName = "/frwiki-20130819-successeur.txt";
+            w.init(fileName);
             instance = w;
         }
         return instance;
@@ -31,7 +30,9 @@ public class Loop {
     protected void init(String fileName) {
         instance = new Loop();
         try {
-            load(this.getClass().getResourceAsStream(fileName));
+            log.info("Chargement du fichier "+fileName);
+            int cpt = load(this.getClass().getResourceAsStream(fileName));
+            log.info(cpt + " lignes chargées");
         } catch (IOException e) {
             log.error("fichier non chargé", e);
         }
@@ -40,7 +41,7 @@ public class Loop {
     /**
      * Chargement des données
      */
-    private static void load(InputStream is) throws IOException {
+    private static int load(InputStream is) throws IOException {
 
         Iterator<String> it = IOUtils.lineIterator(is, "UTF-8");
         int cpt = 0;
@@ -50,10 +51,10 @@ public class Loop {
             String s = it.next();
             String[] t = s.split("#");
             // On ignore les id.
-            map.put(t[1], t[3]);
+            map.put(t[1], t[3].intern());
         }
-        log.debug(cpt + " objects chargés");
-        return;
+        is.close();
+        return cpt;
     }
 
     /**

@@ -19,7 +19,7 @@ public class Main {
         // and start
         Component component = new Component();
         component.getServers().add(Protocol.HTTP, 8012);
-        component.getDefaultHost().attach("/wikiphilo", new LoopApp());
+        component.getDefaultHost().attach("/wikiloop", new LoopApp());
         component.start();
     }
 
