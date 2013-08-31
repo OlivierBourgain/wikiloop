@@ -6,6 +6,9 @@
     <packaging>jar</packaging>
     <version>1.0</version>
     <name>wikiloop</name>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
     <repositories>
         <repository>
             <id>maven-restlet</id>
