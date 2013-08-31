@@ -1,6 +1,5 @@
 package com.obourgain.wikiloop.parser;
 
-import com.obourgain.wikiloop.parser.LinkParser;
 import junit.framework.Assert;
 import org.junit.Ignore;
 import org.junit.Test;

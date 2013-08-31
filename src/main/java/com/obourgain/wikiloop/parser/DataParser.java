@@ -284,7 +284,7 @@ public class DataParser {
      */
     public static Map<String, String> getGraph(File f) throws IOException {
 
-        Map<String, String> res = new HashMap<String,String>();
+        Map<String, String> res = new HashMap<String, String>();
 
         Iterator<String> it = FileUtils.lineIterator(f, "UTF-8");
         int cpt = 0;
