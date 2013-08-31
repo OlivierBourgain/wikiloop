@@ -4,6 +4,9 @@ import com.google.gson.Gson;
 import com.obourgain.wikiloop.server.domain.Loop;
 import com.obourgain.wikiloop.server.model.Page;
 import org.apache.log4j.Logger;
+import org.restlet.data.MediaType;
+import org.restlet.representation.Representation;
+import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
 
@@ -23,20 +26,24 @@ public class LoopResource extends ServerResource {
     }
 
     @Get
-    public String loop() throws UnsupportedEncodingException {
-        cpt++;
-        log.info(cpt+":Get(raw):" + start);
+    public Representation loop() throws UnsupportedEncodingException {
         String decodedPage = URLDecoder.decode(start, "UTF-8");
-        log.info(cpt+":***Get:" + decodedPage);
-        Loop wikiLoop = Loop.get();
 
-        Gson gson = new Gson();
+        cpt++;
+        log.info(cpt + ":Get(raw):" + start);
+        log.info(cpt + ":***Get:" + decodedPage);
+
+        Loop wikiLoop = Loop.get();
         List<Page> loop = wikiLoop.loop(decodedPage);
 
         if (loop.size() == 0) log.debug("Aucun résultat");
         for (Page p : loop) {
-            log.debug(cpt+":Res:" + p);
+            log.debug(cpt + ":Res:" + p);
         }
-        return gson.toJson(loop);
+
+        String res = new Gson().toJson(loop);
+        StringRepresentation sr = new StringRepresentation(res);
+        sr.setMediaType(MediaType.APPLICATION_JSON);
+        return sr;
     }
 }
