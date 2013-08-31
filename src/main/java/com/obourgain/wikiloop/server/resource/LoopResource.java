@@ -42,7 +42,7 @@ public class LoopResource extends ServerResource {
         }
 
         String res = new Gson().toJson(loop);
-        StringRepresentation sr = new StringRepresentation(res);
+        Representation sr = new StringRepresentation(res);
         sr.setMediaType(MediaType.APPLICATION_JSON);
         return sr;
     }

@@ -21,6 +21,7 @@ public class Loop {
         if (instance == null) {
             Loop w = new Loop();
             String fileName = "/frwiki-20130819-successeur.txt";
+            //String fileName = "/test-successeur.txt";
             w.init(fileName);
             instance = w;
         }
@@ -30,7 +31,7 @@ public class Loop {
     protected void init(String fileName) {
         instance = new Loop();
         try {
-            log.info("Chargement du fichier "+fileName);
+            log.info("Chargement du fichier " + fileName);
             int cpt = load(this.getClass().getResourceAsStream(fileName));
             log.info(cpt + " lignes chargées");
         } catch (IOException e) {
