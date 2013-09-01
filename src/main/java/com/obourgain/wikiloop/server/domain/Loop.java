@@ -4,6 +4,8 @@ import com.obourgain.wikiloop.server.model.Page;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -18,31 +20,31 @@ public class Loop {
     }
 
     public static Loop get() {
+        return instance;
+    }
+
+    public static Loop init(String filename) {
         if (instance == null) {
             Loop w = new Loop();
-            String fileName = "/frwiki-20130819-successeur.txt";
+            //String fileName = "/frwiki-20130819-successeur.txt";
             //String fileName = "/test-successeur.txt";
-            w.init(fileName);
+            try {
+                File f = new File(filename);
+                log.info("Chargement du fichier " + f.getAbsolutePath());
+                int cpt = w.load(new FileInputStream(f));
+                log.info(cpt + " lignes chargées");
+            } catch (IOException e) {
+                log.error("fichier non chargé", e);
+            }
             instance = w;
         }
         return instance;
     }
 
-    protected void init(String fileName) {
-        instance = new Loop();
-        try {
-            log.info("Chargement du fichier " + fileName);
-            int cpt = load(this.getClass().getResourceAsStream(fileName));
-            log.info(cpt + " lignes chargées");
-        } catch (IOException e) {
-            log.error("fichier non chargé", e);
-        }
-    }
-
     /**
      * Chargement des données
      */
-    private static int load(InputStream is) throws IOException {
+    private int load(InputStream is) throws IOException {
 
         Iterator<String> it = IOUtils.lineIterator(is, "UTF-8");
         int cpt = 0;

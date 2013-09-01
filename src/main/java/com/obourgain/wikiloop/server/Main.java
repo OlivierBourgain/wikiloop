@@ -10,8 +10,12 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
 
+        if (args == null || args.length <1) {
+            System.out.println("Usage\njava -jar wikiloop-1.0.jar  filename");
+            return;
+        }
         // Avant le démarrage du serveur, on charge le fichier de données.
-        Loop.get();
+        Loop.init(args[0]);
 
         log.info("******  Starting server port 8012 *****");
         // Create a new Component.
