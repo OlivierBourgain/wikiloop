@@ -27,7 +27,7 @@ public class DataParser {
     private static final String wiki = "frwiki-20130819";
 
     /**
-     * Estimation du nombre d'articles utilisé pour tailler les structures de donneés.
+     * Estimation du nombre d'articles. Utilisé pour tailler les structures de données.
      * Pour éviter les resize, prendre nombre d'articles * 1,5
      */
     private static final int NB_ARTICLES = 4500000;
