@@ -25,18 +25,6 @@ public class LinkParserTest {
         fixture = new LinkParser(dict);
     }
 
-    /**
-     * Cas non codé.
-     * Comment différencier un début de gras (''')
-     * et une apostrophe (') suivie d'un début d'italique ('').
-     */
-    @Ignore("Non codé")
-    @Test
-    public void testApostropheSuiviItalic() {
-        // from http://fr.wikipedia.org/wiki/Angerville
-        String text = "domaine d'''Asgeir'' [[Page1]]";
-        Assert.assertEquals(Long.valueOf(1L), fixture.getFirstLink("Page 0 ", text));
-    }
 
     @Test
     public void simpleLink() throws Exception {
@@ -278,6 +266,20 @@ public class LinkParserTest {
         String text = "a (b [[Page1]] ( [[Page3]] ) ) [[Page2]]";
         Assert.assertEquals(Long.valueOf(2L), fixture.getFirstLink("Page 0 ", text));
     }
+
+    @Test
+    public void testApostropheSuiviItalic() {
+        // from http://fr.wikipedia.org/wiki/Angerville
+        String text = "domaine d'''Asgeir'' [[Page1]]";
+        Assert.assertEquals(Long.valueOf(1L), fixture.getFirstLink("Page 0 ", text));
+    }
+    @Test
+    public void testEncyclopedie() {
+        // from https://fr.wikipedia.org/wiki/Encyclop%C3%A9die
+        String text = "Dès sa parution en 1968, l'''[[Page2]]'' est devenue une référence [[Page1]]";
+        Assert.assertEquals(Long.valueOf(1L), fixture.getFirstLink("Page 0 ", text));
+    }
+
 
     @Test
     public void testScience() {

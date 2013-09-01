@@ -37,7 +37,8 @@ public class LinkParser {
         try {
             int l = text.length();
 
-            for (int i = 0; i < l - 1; i++) {
+            // Il faut au moins 5 caractères pour faire un lien
+            for (int i = 0; i < l - 5; i++) {
                 char c = text.charAt(i);
 
                 if (text.charAt(i) == '(') {
@@ -49,9 +50,27 @@ public class LinkParser {
                         i++;
                     }
                     i--;
-                } else if (i < l - 2 && c == '\'' && text.charAt(i + 1) == '\'' && text.charAt(i + 2) == '\'') {
-                    // Bold, on passe
-                    i += 2;
+                } else if (c == '\'' && text.charAt(i + 1) == '\'' && text.charAt(i + 2) == '\'') {
+                    // Si la lettre précédente est un d ou un l, et que la lettre suivante n'est pas un espace
+                    // alors on est devant un combo apostrophe + italique (' et '')
+                    // Sinon c'est du gras (''')
+
+                    if (i > 0 && (text.charAt(i-1) == 'd' || text.charAt(i-1) == 'l' )
+                        && (text.charAt(i+3) != ' ')) {
+                        // On traiter comme de l'italique, il faut ignorer le contenu
+                        i += 2;
+                        // Text italique
+                        while (true) {
+                            if (i > l - 3) break;
+                            if (text.charAt(i) == '\'' && text.charAt(i + 1) == '\'' && text.charAt(i + 2) == '\'') i += 2;
+                            else if (text.charAt(i) == '\'' && text.charAt(i + 1) == '\'') break;
+                            i++;
+                        }
+                        i++;
+                    } else {
+                        // On traite ça comme du gras, on passe
+                        i += 2;
+                    }
                 } else if (c == '\'' && text.charAt(i + 1) == '\'') {
                     i += 2;
                     // Text italique
@@ -84,8 +103,7 @@ public class LinkParser {
                         }
                         i--;
                     }
-                }
-                if (c == '[' && text.charAt(i + 1) == '[') {
+                } else if (c == '[' && text.charAt(i + 1) == '[') {
                     String link = parseLink(text, i, l);
 
                     if (link != null && link.startsWith("Fichier:")) {
