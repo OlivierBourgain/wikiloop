@@ -10,22 +10,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
-public class Loop {
-    private static final Logger log = Logger.getLogger(Loop.class);
+public class Loop2 {
+    private static final Logger log = Logger.getLogger(Loop2.class);
 
-    private static Loop instance;
+    private static Loop2 instance;
     private final static Map<String, String> map = new HashMap<String, String>(3000000);
 
-    private Loop() {
+    private Loop2() {
     }
 
-    public static Loop get() {
+    public static Loop2 get() {
         return instance;
     }
 
-    public static Loop init(String filename) {
+    public static Loop2 init(String filename) {
         if (instance == null) {
-            Loop w = new Loop();
+            Loop2 w = new Loop2();
             //String fileName = "/frwiki-20130819-successeur.txt";
             //String fileName = "/test-successeur.txt";
             try {
@@ -47,6 +47,7 @@ public class Loop {
     private int load(InputStream is) throws IOException {
 
         Iterator<String> it = IOUtils.lineIterator(is, "UTF-8");
+        Set<String> set = new HashSet<String>();
         int cpt = 0;
         while (it.hasNext()) {
             cpt++;
@@ -55,7 +56,9 @@ public class Loop {
             String[] t = s.split("#");
             // On ignore les id.
             map.put(t[1], t[3].intern());
+            set.add(t[3]);
         }
+        log.error("Nb next " + set.size());
         is.close();
         return cpt;
     }
