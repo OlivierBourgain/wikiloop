@@ -1,0 +1,33 @@
+body{font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 21px;
+    color: #333333;
+    padding-left:30px}
+a{color:black}
+
+#intro{font-size:80%;margin-bottom:30px}
+
+
+#search-box{width:570px;height:35px;font-size:100%;color:#AAA}
+input{
+    padding:4px;
+    border:1px solid #222;margin:0;border-radius:7px 0 0 7px;}
+button{
+    position:absolute;
+    height:45px;
+    background-color:darkred;color:#ffffff;
+    font-variant:small-caps;
+    font-size:100%;padding:10px;
+    border:0;margin:0;border-radius:0 7px 7px 0px}
+button:hover{cursor: pointer;}
+
+#breadcrumb{font-size:70%;float:right;font-style:italic}
+.loop-true{font-style:italic;border-left:1px solid #000000;}
+#results{margin-top:20px;width:700px}
+#result-list{padding-top:30px}
+.result{padding:3px 0 0 10px;font-size:80%}
+.result a{text-decoration:none;}
+
+.result a:hover{text-decoration:underline}
+
+#mentions{position:fixed;bottom:0;right:0;align:right;font-size:60%; padding:10px;text-align:right}
+.mention{margin-top:3px}

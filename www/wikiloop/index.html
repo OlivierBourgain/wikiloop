@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en" ng-app>
+<head>
+    <meta charset="utf-8">
+    <title>Wikiloop</title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
+
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <script src="js/controllers.js"></script>
+
+
+</head>
+
+
+<body ng-controller="Wikiloop">
+
+    <h1 id="title">Wikipédia et la page philosophie</h1>
+    <div id="intro">
+        En cliquant sur le premier lien d'un article de Wikipédia, et en répétant l'opération,
+        on arrive généralement sur une boucle. Pour 85% des articles cette boucle contient la page Philosophie.
+        Cette application permet de vérifier ce qui arrive pour une page de départ.</div>
+    <div id="search">
+        <input id="search-box" type="text"
+               nb-keypress="update()"
+               placeholder="Saisissez la page de départ">
+        <button  ng-click="update()">Rechercher</button>
+    </div>
+    <div id="results">
+        <div  id="breadcrumb" ng-show="loop > 0 || nonloop > 0">
+            {{term}}
+                <span ng-show="nonloop == 1">&rarr; {{nonloop}} page</span>
+                <span ng-show="nonloop > 1">&rarr; {{nonloop}} pages</span>
+            &rarr;
+            [ {{first}}
+                <span ng-show="loop == 1">&rarr; {{loop}} page</span>
+                <span ng-show="loop > 1">&rarr; {{loop}} pages</span>
+            &rarr; {{first}} ]
+        </div>
+        <div id="result-list">
+            <div ng-show="!pages.length && term">Page non trouvée</div>
+            <div ng-repeat="page in pages" class="result loop-{{page.inLoop}}">
+                <a href="http://fr.wikipedia.org/wiki/{{page.name}}" target="_blank">{{page.name}}</a>
+            </div>
+        </div>
+    </div>
+    <div id="mentions">
+        <div class="mention">Sur une idée originale de <a href="http://seangransee.com/">Sean Gransee</a> (<a href="http://www.wikiloopr.com/">WikiLoopr</a>).</div>
+        <div class="mention">Application basée sur le contenu de Wikipédia France du <a href="http://dumps.wikimedia.org/frwiki/20130819/">19/08/2013</a>.</div>
+        <div class="mention">Le code de cette application est disponible sur <a href="https://github.com/OlivierBourgain/wikiloop">github</a>.</div>
+        <div class="mention">Retrouvez plus de détails sur mon <a href="http://www.obourgain.com/blog/">blog</a>.</div>
+    </div>
+
+</body>
+</html>
