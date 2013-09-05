@@ -1,7 +1,6 @@
 package com.obourgain.wikiloop.parser;
 
 import junit.framework.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -273,6 +272,7 @@ public class LinkParserTest {
         String text = "domaine d'''Asgeir'' [[Page1]]";
         Assert.assertEquals(Long.valueOf(1L), fixture.getFirstLink("Page 0 ", text));
     }
+
     @Test
     public void testEncyclopedie() {
         // from https://fr.wikipedia.org/wiki/Encyclop%C3%A9die
