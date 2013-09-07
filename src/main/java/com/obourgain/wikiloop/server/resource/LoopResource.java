@@ -37,9 +37,7 @@ public class LoopResource extends ServerResource {
         List<Page> loop = wikiLoop.loop(decodedPage);
 
         if (loop.size() == 0) log.debug("Aucun résultat");
-        for (Page p : loop) {
-            log.debug(cpt + ":Res:" + p);
-        }
+        log.debug(cpt + ":Res:" + loop);
 
         String res = new Gson().toJson(loop);
         Representation sr = new StringRepresentation(res);
