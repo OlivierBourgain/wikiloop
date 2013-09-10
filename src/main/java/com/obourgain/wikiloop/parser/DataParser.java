@@ -126,9 +126,12 @@ public class DataParser {
         File in = new File(root + wiki + "-pages-articles-multistream.xml");
         File out = new File(root + wiki + "-firstlink.txt");
         File err = new File(root + wiki + "-err.txt");
+        File listerr = new File(root + wiki + "-listerr.txt");
+
         System.out.println("Fichier en entrée " + in.getAbsolutePath());
         System.out.println("Fichier en sortie " + out.getAbsolutePath());
         System.out.println("Fichier erreur    " + err.getAbsolutePath());
+        System.out.println("Fichier liste err " + listerr.getAbsolutePath());
 
         LinkParser linkParser = new LinkParser(dict);
         XMLInputFactory xmlif = XMLInputFactory.newInstance();
@@ -187,6 +190,7 @@ public class DataParser {
                             } else {
                                 FileUtils.writeStringToFile(err, "\n###########################################################\n", "UTF-8", true);
                                 FileUtils.writeStringToFile(err, "Page " + id + " = " + title + " -> Next Not Found\n" + text + "\n", "UTF-8", true);
+                                FileUtils.writeStringToFile(listerr, title + "\n", "UTF-8", true);
                                 ko++;
                             }
                         } else {
