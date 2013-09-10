@@ -274,6 +274,13 @@ public class LinkParserTest {
     }
 
     @Test
+    public void testApostropheSuiviItalic2() {
+        // from http://fr.wikipedia.org/wiki/Angerville
+        String text = "xxx '''yyyd'''. [[Page1]]";
+        Assert.assertEquals(Long.valueOf(1L), fixture.getFirstLink("Page 0 ", text));
+    }
+
+    @Test
     public void testEncyclopedie() {
         // from https://fr.wikipedia.org/wiki/Encyclop%C3%A9die
         String text = "Dès sa parution en 1968, l'''[[Page2]]'' est devenue une référence [[Page1]]";

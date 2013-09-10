@@ -55,8 +55,11 @@ public class LinkParser {
                     // alors on est devant un combo apostrophe + italique (' et '')
                     // Sinon c'est du gras (''')
 
-                    if (i > 0 && (text.charAt(i - 1) == 'd' || text.charAt(i - 1) == 'l')
-                            && (text.charAt(i + 3) != ' ')) {
+                    if (i > 0
+                            && (text.charAt(i - 1) == 'd' || text.charAt(i - 1) == 'l')
+                            && (text.charAt(i + 3) != ' ')
+                            && (Character.isAlphabetic(text.charAt(i + 3)) || text.charAt(i + 3) == '[')
+                            ) {
                         // On traiter comme de l'italique, il faut ignorer le contenu
                         i += 2;
                         // Text italique
