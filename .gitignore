@@ -5,4 +5,6 @@ _perso/
 target/
 logs/
 src/main/resources/frwiki*
-
+.project
+.classpath
+/bin/

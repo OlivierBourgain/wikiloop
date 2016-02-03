@@ -1,15 +1,20 @@
 package com.obourgain.wikiloop.parser;
 
-import org.apache.commons.io.FileUtils;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.XMLEvent;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.*;
+
+import org.apache.commons.io.FileUtils;
 
 /**
  * Parse un dump de wikipedia et génère un fichier contenant la chaine de pages
@@ -23,8 +28,8 @@ public class DataParser {
     /**
      * Emplacement et nom de l'export à traiter.
      */
-    private static final String root = "../Wikipedia/data/";
-    private static final String wiki = "frwiki-20130819";
+    private static final String root = "data/";
+    private static final String wiki = "frwiki-20151202";
 
     /**
      * Estimation du nombre d'articles. Utilisé pour tailler les structures de données.
@@ -56,14 +61,14 @@ public class DataParser {
         // Lit l'index et renseigne les deux map
         // pages = Index -> Page
         // dict  = Page -> Index
-        step1(wiki);
+        //step1(wiki);
 
         System.out.println("\n\n");
 
         // Step 2
         // Lit le fichier principal, et extrait le premier lien de chaque page
         // Ecrit le résultat dans le fichier firstlink
-        step2(wiki);
+        //step2(wiki);
 
         // Libère les deux maps initiales de la mémoire, on en a plus besoin.
         pages = null;
@@ -232,6 +237,14 @@ public class DataParser {
 
         long start = System.currentTimeMillis();
         long split = start;
+        
+
+        int longestPathToOther = 0;
+        String longestPathToOtherPage = null;
+
+        int longestPathToPhilo = 0;
+        String longestPathToPhiloPage = null;
+        		
         for (String root : map.keySet()) {
             cpt++;
             //if (cpt >= 10000) break;
@@ -243,10 +256,21 @@ public class DataParser {
             }
 
             List<String> res = containsLoop(root, map);
+            
+ 
+
             if (res.contains("Philosophie")) {
                 philo++;
+                if (res.size()>longestPathToPhilo) {
+                	longestPathToPhilo = res.size();
+                	longestPathToPhiloPage = root;
+                }
             } else {
                 nonphilo++;
+                if (res.size()>longestPathToOther) {
+                	longestPathToOther = res.size();
+                	longestPathToOtherPage = root;
+                }           
             }
             FileUtils.writeStringToFile(out, dump(res), "UTF-8", true);
             FileUtils.writeStringToFile(out, "\n", "UTF-8", true);
@@ -263,6 +287,11 @@ public class DataParser {
         System.out.println("**     " + duration / 1000 + " sec");
         System.out.println("**     " + cpt * 1000L / duration + " lignes/s");
         System.out.println("***********************************");
+        System.out.println("**     Longest path to philo " + longestPathToPhilo + " for "+longestPathToPhiloPage);
+        System.out.println("**     Longest path to other " + longestPathToOther + " for "+longestPathToOtherPage);        
+        System.out.println("***********************************");
+        
+
     }
 
     /**
@@ -279,6 +308,15 @@ public class DataParser {
         if (line.contains("Référence:")) return true;
         if (line.contains("Aide:")) return true;
         if (line.contains("Module:")) return true;
+        
+        // Pour wikipedia la
+        if (line.contains("Categoria:")) return true;
+        if (line.contains("Formula:")) return true;
+        if (line.contains("Vicipaedia:")) return true;
+        if (line.contains("Porta:")) return true;
+        
+        
+        
         return false;
     }
 
