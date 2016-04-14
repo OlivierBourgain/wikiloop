@@ -1,7 +1,7 @@
 En cliquant sur le premier lien d'un article de Wikipédia, et en répétant l'opération, 85% des articles mènent à la page Philosophie.
 Cette application permet de le vérifier.
 
-Voir également [mon post](http://www.obourgain.com/blog/2013/08/26/Wikipedia-philosophie.html) sur le sujet.
+Voir également [mon post](http://www.obourgain.com/2013/08/26/Wikipedia-philosophie/) sur le sujet.
 
 ##Contenu du projet
 
