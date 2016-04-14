@@ -8,7 +8,7 @@ function Wikiloop($scope) {
         $scope.term = term;
         $.ajax({
             //url: "http://www.obourgain.com/wikiloop/loop/"+term,
-            url: "http://ec2-54-229-146-167.eu-west-1.compute.amazonaws.com:8012/wikiloop/loop/"+term,
+            url: "http://vps234916.ovh.net:8012/wikiloop/loop/"+term,
             dataType: "jsonp",
             cache : "true",
             success: function(data) {
