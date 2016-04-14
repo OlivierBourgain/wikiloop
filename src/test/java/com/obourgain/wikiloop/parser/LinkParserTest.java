@@ -8,7 +8,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 /**
- * Date: 15/08/13
+ * 
  */
 public class LinkParserTest {
     private static final String TITLE = "Page 0";
@@ -362,10 +362,11 @@ public class LinkParserTest {
         Assert.assertEquals(Long.valueOf(11L), fixture.getFirstLink(TITLE, text));
     }
     
-    @Ignore("Non développé")
     @Test
     public void testControleAerien() {
-    	String text = "Le '''contrôle du trafic aérien''' (en anglais ''Air Traffic Control ou'' '''ATC''''')'', ou '''contrôle de la circulation aérienne''', ou également appelé '''contrôle aérien''', est l'un des trois types de [[Page1]].";
+    	String text = "'''contrôle du trafic aérien''' (en anglais ''Air Traffic Control'' ou '''''ATC'''''), "
+    				+ " ou '''contrôle de la circulation aérienne''', ou également appelé '''contrôle aérien'''," 
+    			    + " est l'un des trois types de [[Page1]].";
         Assert.assertEquals(Long.valueOf(1L), fixture.getFirstLink(TITLE, text));
     }
 

@@ -3,7 +3,8 @@ package com.obourgain.wikiloop.parser;
 import java.util.Map;
 
 public class LinkParser {
-    Map<String, Long> dict;
+    private static final char APOS = '\'';
+	Map<String, Long> dict;
 
     public LinkParser(Map<String, Long> dict) {
         this.dict = dict;
@@ -16,7 +17,7 @@ public class LinkParser {
      * - on ignore les liens externes, les liens vers la page elle même et les liens rouges (liens vers une page qui n'existe pas)
      * <p/>
      * <p/>
-     * Les liens apparaissent dans l'article sous la forme :
+     * Les liens apparaissent dans l'article sous la forme:
      * [[Titre page]]
      * [[Titre page|Alias]]
      * <p/>
@@ -41,7 +42,7 @@ public class LinkParser {
             for (int i = 0; i < l - 5; i++) {
                 char c = text.charAt(i);
 
-                if (text.charAt(i) == '(') {
+                if (c == '(') {
                     int nb = 1;
                     i += 1;
                     while (nb > 0 && i < l) {
@@ -50,24 +51,27 @@ public class LinkParser {
                         i++;
                     }
                     i--;
-                } else if (c == '\'' && text.charAt(i + 1) == '\'' && text.charAt(i + 2) == '\'') {
-                    // Si la lettre précédente est un d ou un l, et que la lettre suivante n'est pas un espace
+                    
+                // Texte commence par 3 apostrophes
+                } else if (text.charAt(i) == APOS && text.charAt(i + 1) == APOS && text.charAt(i + 2) == APOS) {
+                    
+                	// Si la lettre précédente est un d ou un l, et que la lettre suivante n'est pas un espace
                     // alors on est devant un combo apostrophe + italique (' et '')
                     // Sinon c'est du gras (''')
-
                     if (i > 0
                             && (text.charAt(i - 1) == 'd' || text.charAt(i - 1) == 'l')
                             && (text.charAt(i + 3) != ' ')
                             && (Character.isAlphabetic(text.charAt(i + 3)) || text.charAt(i + 3) == '[')
                             ) {
-                        // On traiter comme de l'italique, il faut ignorer le contenu
+                    
+                    	// On traiter comme de l'italique, il faut ignorer le contenu
                         i += 2;
                         // Text italique
                         while (true) {
                             if (i > l - 3) break;
-                            if (text.charAt(i) == '\'' && text.charAt(i + 1) == '\'' && text.charAt(i + 2) == '\'')
+                            if (text.charAt(i) == APOS && text.charAt(i + 1) == APOS && text.charAt(i + 2) == APOS)
                                 i += 2;
-                            else if (text.charAt(i) == '\'' && text.charAt(i + 1) == '\'') break;
+                            else if (text.charAt(i) == APOS && text.charAt(i + 1) == APOS) break;
                             i++;
                         }
                         i++;
@@ -75,27 +79,31 @@ public class LinkParser {
                         // On traite ça comme du gras, on passe
                         i += 2;
                     }
-                } else if (c == '\'' && text.charAt(i + 1) == '\'') {
+                // Texte commence par 2 apostrophes
+                } else if (c == APOS && text.charAt(i + 1) == APOS) {
                     i += 2;
                     // Text italique
                     while (true) {
                         if (i > l - 3) break;
-                        if (text.charAt(i) == '\'' && text.charAt(i + 1) == '\'' && text.charAt(i + 2) == '\'') i += 2;
-                        else if (text.charAt(i) == '\'' && text.charAt(i + 1) == '\'') break;
+                        if (text.charAt(i) == APOS && text.charAt(i + 1) == APOS && text.charAt(i + 2) == APOS) i += 2;
+                        else if (text.charAt(i) == APOS && text.charAt(i + 1) == APOS) break;
                         i++;
                     }
                     i++;
+                // Texte commence par <ref...
                 } else if (c == '<' && text.charAt(i + 1) == 'r') {
                     if (text.startsWith("<ref", i)) {
                         int end = text.indexOf("</ref>", i);
                         if (end < 0) end = text.indexOf("</ref >", i);
                         if (end > 0) i = end;
                     }
+                // Texte commence par <!--
                 } else if (c == '<' && text.charAt(i + 1) == '!') {
                     if (text.startsWith("<!--", i)) {
                         int end = text.indexOf("-->", i);
                         if (end > 0) i = end;
                     }
+                // Texte commence par {{
                 } else if (c == '{' && text.charAt(i + 1) == '{') {
                     if (templateShouldBeIgnored(text, i, l)) {
                         int nb = 2;
@@ -107,6 +115,7 @@ public class LinkParser {
                         }
                         i--;
                     }
+                // Texte commence par [[
                 } else if (c == '[' && text.charAt(i + 1) == '[') {
                     String link = parseLink(text, i, l);
 
@@ -156,6 +165,9 @@ public class LinkParser {
         return null;
     }
 
+    /**
+     * Indique si le template doit être ignoré.
+     */
     private boolean templateShouldBeIgnored(String text, int i, int l) {
         String t = text.substring(i + 2, min(i + 9, l));
         // Référence souhaitée ou référence nécessaire. Le texte est souligné, mais doit
@@ -173,6 +185,9 @@ public class LinkParser {
         return true;
     }
 
+    /**
+     * 
+     */
     private int findEndLink(String text, int i, int l) {
         int nb = 1;
         i += 2;
@@ -188,7 +203,9 @@ public class LinkParser {
         return i;
     }
 
-
+    /**
+     * 
+     */
     private String parseLink(String text, int i, int l) {
         int end = text.indexOf(']', i + 1);
         int pipe = text.indexOf('|', i + 1);

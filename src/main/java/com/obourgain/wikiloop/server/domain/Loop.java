@@ -18,8 +18,8 @@ public class Loop {
 
 	private static Loop instance;
 	/*
-	 * L'objectif est de faire tourner le serveur sur une instance tiny d'EC2,
-	 * qui est limitée à 500Mo de RAM.
+	 * Le process fonctionnait initialement de faire tourner le serveur sur une instance 
+	 * tiny d'EC2 (gratuite), qui est limitée à 500Mo de RAM.
 	 * 
 	 * Pour économiser un peu de mémoire, au lieu de stocker les données dans
 	 * une Map<String, String> (Page -> Sucesseur), on utilise un tableau de
