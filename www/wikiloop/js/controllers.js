@@ -35,21 +35,25 @@ function Wikiloop($scope) {
 // Autocomplétion sur recherche.
 $(function(){
     $( "#search-box" ).autocomplete({
-    source: function(request, response) {
-        return $.ajax({
-            url: "http://fr.wikipedia.org/w/api.php",
-            dataType: "jsonp",
-            data: {
-                action: "opensearch",
-                format: "json",
-                search: request.term
-            },
-            success: function(data) {
-                $("results").empty();
-                response(data[1]);
-            }
-        });
-    }});
+	    source: function(request, response) {
+	        return $.ajax({
+	            url: "http://fr.wikipedia.org/w/api.php",
+	            dataType: "jsonp",
+	            data: {
+	                action: "opensearch",
+	                format: "json",
+	                search: request.term
+	            },
+	            success: function(data) {
+	                $("results").empty();
+	                response(data[1]);
+	            }
+	        });
+	    },
+	    select: function( event, ui ) {
+	    	angular.element('#search-btn').triggerHandler('click');
+	    },
+    });
     $("#search-box").on("click", function () {
         $(this).select();
     });

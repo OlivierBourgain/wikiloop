@@ -24,9 +24,9 @@
         Cette application permet de vérifier ce qui arrive pour une page de départ.</div>
     <div id="search">
         <input id="search-box" type="text"
-               nb-keypress="update()"
+               ng-keypress="update()"
                placeholder="Saisissez la page de départ">
-        <button  ng-click="update()">Rechercher</button>
+        <button  id="search-btn" ng-click="update()">Rechercher</button>
     </div>
     <div id="results">
         <div  id="breadcrumb" ng-show="loop > 0 || nonloop > 0">
