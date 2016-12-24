@@ -382,5 +382,20 @@ public class LinkParserTest {
     	String text = "[[Fichier:x]][[Page1]]";
         Assert.assertEquals(Long.valueOf(1L), fixture.getFirstLink(TITLE, text));
     }
+    
+    @Test
+    public void testLinkAfterFichier2() {
+    	String text = "[[Fichier:x[[Image:y]]]][[Page1]]";
+        Assert.assertEquals(Long.valueOf(1L), fixture.getFirstLink(TITLE, text));
+    }
+    
+    @Test
+    public void testApostropheItaliqueGras(){
+    	String text = "L''''''X''''' est [[Page1]]";
+        Assert.assertEquals(Long.valueOf(1L), fixture.getFirstLink(TITLE, text));
+
+    }
+    
+    
 
 }
