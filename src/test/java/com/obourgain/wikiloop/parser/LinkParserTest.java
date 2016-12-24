@@ -370,4 +370,17 @@ public class LinkParserTest {
         Assert.assertEquals(Long.valueOf(1L), fixture.getFirstLink(TITLE, text));
     }
 
+    
+    @Test
+    public void testLinkAfterImage() {
+    	String text = "[[Image:x]][[Page1]]";
+        Assert.assertEquals(Long.valueOf(1L), fixture.getFirstLink(TITLE, text));
+    }
+    
+    @Test
+    public void testLinkAfterFichier() {
+    	String text = "[[Fichier:x]][[Page1]]";
+        Assert.assertEquals(Long.valueOf(1L), fixture.getFirstLink(TITLE, text));
+    }
+
 }

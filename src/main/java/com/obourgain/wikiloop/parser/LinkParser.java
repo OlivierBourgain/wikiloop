@@ -200,7 +200,7 @@ public class LinkParser {
                 i += 2;
             } else i++;
         }
-        return i;
+        return i - 1;
     }
 
     /**
