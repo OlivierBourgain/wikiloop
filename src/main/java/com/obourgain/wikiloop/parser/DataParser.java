@@ -29,13 +29,13 @@ public class DataParser {
      * Emplacement et nom de l'export à traiter.
      */
     private static final String root = "data/";
-    private static final String wiki = "frwiki-20151202";
+    private static final String wiki = "frwiki-20161220";
 
     /**
      * Estimation du nombre d'articles. Utilisé pour tailler les structures de données.
      * Pour éviter les resize, prendre nombre d'articles * 1,5
      */
-    private static final int NB_ARTICLES = 4500000;
+    private static final int NB_ARTICLES = 6000000;
 
 
     /**
@@ -61,14 +61,14 @@ public class DataParser {
         // Lit l'index et renseigne les deux map
         // pages = Index -> Page
         // dict  = Page -> Index
-        //step1(wiki);
+        step1(wiki);
 
         System.out.println("\n\n");
 
         // Step 2
         // Lit le fichier principal, et extrait le premier lien de chaque page
         // Ecrit le résultat dans le fichier firstlink
-        //step2(wiki);
+        step2(wiki);
 
         // Libère les deux maps initiales de la mémoire, on en a plus besoin.
         pages = null;
@@ -117,9 +117,10 @@ public class DataParser {
         }
 
         System.out.println("***********************************");
-        System.out.println("**     " + cpt + " lines");
-        System.out.println("**     " + ok + " lines ok");
-        System.out.println("**     " + ko + " lines ko");
+        System.out.println("**     " + cpt + " lignes");
+        System.out.println("**     " + ok + " lignes ok");
+        System.out.println("**     " + special + " pages spéciales");
+        System.out.println("**     " + ko + " lignes ko");
         System.out.println("***********************************");
     }
 
@@ -156,16 +157,16 @@ public class DataParser {
                 String name = event.asStartElement().getName().toString();
                 if (name.endsWith("}page")) {
                     cpt++;
-                    if (cpt % 10000 == 0) {
+                    if (cpt % 50000 == 0) {
                         System.out.print("Parsing article " + cpt);
                         long elapse = System.currentTimeMillis() - split;
-                        System.out.println("    " + (elapse / 1000) + "s - " + (10000 * 1000L / elapse) + " articles/s");
+                        System.out.println("    " + (elapse / 1000) + "s - " + (50000 * 1000L / elapse) + " articles/s");
                         split = System.currentTimeMillis();
                     }
 
                     //if (cpt > 100000) break;
                     Long id = null;
-                    String text = null;
+                    StringBuilder text = null;
                     while (true) {
                         event = xmler.nextEvent();
                         if (event.isStartElement()) {
@@ -175,9 +176,9 @@ public class DataParser {
                                 id = Long.parseLong(event.asCharacters().getData());
                             } else if (name.endsWith("text")) {
                                 event = xmler.nextEvent();
-                                text = "";
+                                text = new StringBuilder();
                                 while (event.isCharacters()) {
-                                    text += event.asCharacters().getData();
+                                    text.append(event.asCharacters().getData());
                                     event = xmler.nextEvent();
                                 }
                                 break;
@@ -188,9 +189,9 @@ public class DataParser {
                     if (title == null || isSpecialPage(title)) {
                         nontraite++;
                     } else {
-                        Long next = linkParser.getFirstLink(title, text);
+                        Long next = linkParser.getFirstLink(title, text.toString());
                         if (next == null) {
-                            if (linkParser.isRedirect(text)) {
+                            if (linkParser.isRedirect(text.toString())) {
                                 redirect++;
                             } else {
                                 FileUtils.writeStringToFile(err, "\n###########################################################\n", "UTF-8", true);
@@ -233,7 +234,7 @@ public class DataParser {
         Map<String, String> map = getGraph(in);
         int cpt = 0;
         int philo = 0;
-        int nonphilo = 0;
+        int other = 0;
 
         long start = System.currentTimeMillis();
         long split = start;
@@ -248,10 +249,10 @@ public class DataParser {
         for (String root : map.keySet()) {
             cpt++;
             //if (cpt >= 10000) break;
-            if (cpt % 10000 == 0) {
+            if (cpt % 50000 == 0) {
                 System.out.print("Parsing article " + cpt);
                 long elapse = System.currentTimeMillis() - split;
-                System.out.println("    " + (elapse / 1000) + "s - " + (10000 * 1000L / elapse) + " articles/s");
+                System.out.println("    " + (elapse / 1000) + "s - " + (50000 * 1000L / elapse) + " articles/s");
                 split = System.currentTimeMillis();
             }
 
@@ -266,7 +267,7 @@ public class DataParser {
                 	longestPathToPhiloPage = root;
                 }
             } else {
-                nonphilo++;
+                other++;
                 if (res.size()>longestPathToOther) {
                 	longestPathToOther = res.size();
                 	longestPathToOtherPage = root;
@@ -282,8 +283,8 @@ public class DataParser {
         System.out.println("**     " + cpt + " articles chargés");
         System.out.println("**     " + philo + " articles mènent vers Philosophie");
         System.out.println("**     " + 100. * philo / cpt + " %");
-        System.out.println("**     " + nonphilo + " articles ne mènent pas vers Philosophie");
-        System.out.println("**     " + 100. * nonphilo / cpt + " %");
+        System.out.println("**     " + other + " articles ne mènent pas vers Philosophie");
+        System.out.println("**     " + 100. * other / cpt + " %");
         System.out.println("**     " + duration / 1000 + " sec");
         System.out.println("**     " + cpt * 1000L / duration + " lignes/s");
         System.out.println("***********************************");
@@ -300,6 +301,7 @@ public class DataParser {
     private static boolean isSpecialPage(String line) {
         if (line.contains("Catégorie:")) return true;
         if (line.contains("Projet:")) return true;
+        if (line.contains("Sujet:")) return true;
         if (line.contains("Wikipédia:")) return true;
         if (line.contains("Modèle:")) return true;
         if (line.contains("Fichier:")) return true;
@@ -352,10 +354,10 @@ public class DataParser {
 
 
     /**
-     * Vérifie s'il existe un cycle dans la liste chainée passée en paramètre.
+     * Identifie un cycle dans la liste chainée passée en paramètre.
      *
      * @param root La racine de la liste.
-     * @return true si la liste contient un cycle, false sinon.
+     * @return le cycle.
      */
     public static List<String> containsLoop(String root, Map<String, String> map) {
         List<String> res = new ArrayList<String>();
