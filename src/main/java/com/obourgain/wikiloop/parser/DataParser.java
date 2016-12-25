@@ -20,385 +20,392 @@ import org.apache.commons.io.FileUtils;
  * Parse un dump de wikipedia et génère un fichier contenant la chaine de pages
  * atteintes en suivant le premier lien.
  * <p/>
- * Ce traitement se base sur un dump de wikipédia France (http://dumps.wikimedia.org/frwiki/).
- * Pour
+ * Ce traitement se base sur un dump de wikipédia France
+ * (http://dumps.wikimedia.org/frwiki/).
+ * 
+ * 
+ * A lancer avec le paramètre -Djdk.xml.totalEntitySizeLimit=2147480000
  */
 public class DataParser {
 
-    /**
-     * Emplacement et nom de l'export à traiter.
-     */
-    private static final String root = "data/";
-    private static final String wiki = "frwiki-20161220";
+	/**
+	 * Emplacement et nom de l'export à traiter.
+	 */
+	private static final String root = "data/";
+	private static final String wiki = "frwiki-20161220";
 
-    /**
-     * Estimation du nombre d'articles. Utilisé pour tailler les structures de données.
-     * Pour éviter les resize, prendre nombre d'articles * 1,5
-     */
-    private static final int NB_ARTICLES = 6000000;
+	/**
+	 * Estimation du nombre d'articles. Utilisé pour tailler les structures de
+	 * données.
+	 * Pour éviter les resize, prendre nombre d'articles * 1,5
+	 */
+	private static final int NB_ARTICLES = 6000000;
 
+	/**
+	 * Le traitement va utiliser les fichiers :
+	 * wiki + "pages-articles-multistream-index.txt"
+	 * wiki + "pages-articles-multistream.xml
+	 * <p/>
+	 * et générer 3 fichiers
+	 * wiki + "err.txt" contenant les pages pour lesquels le premier lien n'est
+	 * pas trouvé.
+	 * wiki + "successeurs.txt" contenant le premier lien de chaque page.
+	 * wiki + "cycles.txt" contenant le détail de la chaine de page pour chaque
+	 * page.
+	 */
 
-    /**
-     * Le traitement va utiliser les fichiers :
-     * wiki + "pages-articles-multistream-index.txt"
-     * wiki + "pages-articles-multistream.xml
-     * <p/>
-     * et générer 3 fichiers
-     * wiki + "err.txt"  contenant les pages pour lesquels le premier lien n'est pas trouvé.
-     * wiki + "successeurs.txt"  contenant le premier lien de chaque page.
-     * wiki + "cycles.txt"  contenant le détail de la chaine de page pour chaque page.
-     */
+	public static final String SEP_LIEN = "#";
+	public static final String SEP_CYCLE = " -> ";
+	private static Map<Long, String> pages = new HashMap<Long, String>(NB_ARTICLES);
+	private static Map<String, Long> dict = new HashMap<String, Long>(NB_ARTICLES);
 
-    public static final String SEP_LIEN = "#";
-    public static final String SEP_CYCLE = " -> ";
-    private static Map<Long, String> pages = new HashMap<Long, String>(NB_ARTICLES);
-    private static Map<String, Long> dict = new HashMap<String, Long>(NB_ARTICLES);
+	public static void main(String[] args) throws IOException, XMLStreamException {
 
+		// Step 1
+		// Lit l'index et renseigne les deux map
+		// pages = Index -> Page
+		// dict = Page -> Index
+		step1(wiki);
 
-    public static void main(String[] args) throws IOException, XMLStreamException {
+		System.out.println("\n\n");
 
-        // Step 1
-        // Lit l'index et renseigne les deux map
-        // pages = Index -> Page
-        // dict  = Page -> Index
-        step1(wiki);
+		// Step 2
+		// Lit le fichier principal, et extrait le premier lien de chaque page
+		// Ecrit le résultat dans le fichier firstlink
+		step2(wiki);
 
-        System.out.println("\n\n");
+		// Libère les deux maps initiales de la mémoire, on en a plus besoin.
+		pages = null;
+		dict = null;
 
-        // Step 2
-        // Lit le fichier principal, et extrait le premier lien de chaque page
-        // Ecrit le résultat dans le fichier firstlink
-        step2(wiki);
+		System.out.println("\n\n");
 
-        // Libère les deux maps initiales de la mémoire, on en a plus besoin.
-        pages = null;
-        dict = null;
+		// Step 3
+		// Lit le fichier firstlink, et génère la suite de page pour chaque page
+		// Ecrit le résultat dans le fichier cycles
+		step3(wiki);
+	}
 
-        System.out.println("\n\n");
+	private static void step1(String wiki) throws IOException {
+		System.out.println("***********************************");
+		System.out.println("**     Step 1 - Parsing index file ");
+		System.out.println("***********************************");
+		File in = new File(root + wiki + "-pages-articles-multistream-index.txt");
+		System.out.println("Fichier en entrée " + in.getAbsolutePath());
 
-        // Step 3
-        // Lit le fichier firstlink, et génère la suite de page pour chaque page
-        // Ecrit le résultat dans le fichier cycles
-        step3(wiki);
-    }
+		int cpt = 0;
+		Iterator<String> it = FileUtils.lineIterator(in, "UTF-8");
 
-    private static void step1(String wiki) throws IOException {
-        System.out.println("***********************************");
-        System.out.println("**     Step 1 - Parsing index file ");
-        System.out.println("***********************************");
-        File in = new File(root + wiki + "-pages-articles-multistream-index.txt");
-        System.out.println("Fichier en entrée " + in.getAbsolutePath());
+		int ok = 0;
+		int ko = 0;
+		int special = 0;
+		while (it.hasNext()) {
+			cpt++;
+			if (cpt % 100000 == 0) System.out.println("Loading line " + cpt);
+			String line = it.next();
+			int i1 = line.indexOf(":");
+			int i2 = line.indexOf(":", i1 + 1);
+			Long id = Long.parseLong(line.substring(i1 + 1, i2));
+			String title = line.substring(i2 + 1);
+			if (pages.containsKey(id)) {
+				System.out.println("Duplicate " + title);
+				ko++;
+			} else if (isSpecialPage(title)) {
+				special++;
+			} else {
+				pages.put(id, title);
+				dict.put(title, id);
+				ok++;
+			}
 
-        int cpt = 0;
-        Iterator<String> it = FileUtils.lineIterator(in, "UTF-8");
+		}
 
-        int ok = 0;
-        int ko = 0;
-        int special = 0;
-        while (it.hasNext()) {
-            cpt++;
-            if (cpt % 100000 == 0) System.out.println("Loading line " + cpt);
-            String line = it.next();
-            int i1 = line.indexOf(":");
-            int i2 = line.indexOf(":", i1 + 1);
-            Long id = Long.parseLong(line.substring(i1 + 1, i2));
-            String title = line.substring(i2 + 1);
-            if (pages.containsKey(id)) {
-                System.out.println("Duplicate " + title);
-                ko++;
-            } else if (isSpecialPage(title)) {
-                special++;
-            } else {
-                pages.put(id, title);
-                dict.put(title, id);
-                ok++;
-            }
+		System.out.println("***********************************");
+		System.out.println("**     " + cpt + " lignes");
+		System.out.println("**     " + ok + " lignes ok");
+		System.out.println("**     " + special + " pages spéciales");
+		System.out.println("**     " + ko + " lignes ko");
+		System.out.println("***********************************");
+	}
 
-        }
+	private static void step2(String wiki) throws XMLStreamException, IOException {
+		System.out.println("***********************************");
+		System.out.println("**     Step 2 - Parsing main data file ");
+		System.out.println("***********************************");
 
-        System.out.println("***********************************");
-        System.out.println("**     " + cpt + " lignes");
-        System.out.println("**     " + ok + " lignes ok");
-        System.out.println("**     " + special + " pages spéciales");
-        System.out.println("**     " + ko + " lignes ko");
-        System.out.println("***********************************");
-    }
+		File in = new File(root + wiki + "-pages-articles-multistream.xml");
+		File out = new File(root + wiki + "-firstlink.txt");
+		File err = new File(root + wiki + "-err.txt");
+		File listerr = new File(root + wiki + "-listerr.txt");
 
-    private static void step2(String wiki) throws XMLStreamException, IOException {
-        System.out.println("***********************************");
-        System.out.println("**     Step 2 - Parsing main data file ");
-        System.out.println("***********************************");
+		System.out.println("Fichier en entrée " + in.getAbsolutePath());
+		System.out.println("Fichier en sortie " + out.getAbsolutePath());
+		System.out.println("Fichier erreur    " + err.getAbsolutePath());
+		System.out.println("Fichier liste err " + listerr.getAbsolutePath());
 
-        File in = new File(root + wiki + "-pages-articles-multistream.xml");
-        File out = new File(root + wiki + "-firstlink.txt");
-        File err = new File(root + wiki + "-err.txt");
-        File listerr = new File(root + wiki + "-listerr.txt");
+		LinkParser linkParser = new LinkParser(dict);
+		XMLInputFactory xmlif = XMLInputFactory.newInstance();
+		xmlif.setProperty("javax.xml.stream.isReplacingEntityReferences", Boolean.TRUE);
+		XMLEventReader xmler = xmlif.createXMLEventReader(new FileReader(in));
+		int cpt = 0;
+		int ok = 0;
+		int ko = 0;
+		int nontraite = 0;
+		int redirect = 0;
+		long start = System.currentTimeMillis();
+		long split = start;
+		while (xmler.hasNext()) {
 
-        System.out.println("Fichier en entrée " + in.getAbsolutePath());
-        System.out.println("Fichier en sortie " + out.getAbsolutePath());
-        System.out.println("Fichier erreur    " + err.getAbsolutePath());
-        System.out.println("Fichier liste err " + listerr.getAbsolutePath());
+			XMLEvent event = xmler.nextEvent();
+			if (event.isStartElement()) {
+				String name = event.asStartElement().getName().toString();
+				if (name.endsWith("}page")) {
+					cpt++;
+					if (cpt % 50000 == 0) {
+						System.out.print("Parsing article " + cpt);
+						long elapse = System.currentTimeMillis() - split;
+						System.out.println("    " + (elapse / 1000) + "s - " + (50000 * 1000L / elapse) + " articles/s");
+						split = System.currentTimeMillis();
+					}
 
-        LinkParser linkParser = new LinkParser(dict);
-        XMLInputFactory xmlif = XMLInputFactory.newInstance();
-        xmlif.setProperty("javax.xml.stream.isReplacingEntityReferences", Boolean.TRUE);
-        XMLEventReader xmler = xmlif.createXMLEventReader(new FileReader(in));
-        int cpt = 0;
-        int ok = 0;
-        int ko = 0;
-        int nontraite = 0;
-        int redirect = 0;
-        long start = System.currentTimeMillis();
-        long split = start;
-        while (xmler.hasNext()) {
+					// if (cpt > 100000) break;
+					Long id = null;
+					StringBuilder text = null;
+					while (true) {
+						event = xmler.nextEvent();
+						if (event.isStartElement()) {
+							name = event.asStartElement().getName().toString();
+							if ((id == null) && name.endsWith("id")) {
+								event = xmler.nextEvent();
+								id = Long.parseLong(event.asCharacters().getData());
+							} else if (name.endsWith("text")) {
+								event = xmler.nextEvent();
+								text = new StringBuilder();
+								while (event.isCharacters()) {
+									text.append(event.asCharacters().getData());
+									event = xmler.nextEvent();
+								}
+								break;
+							}
+						}
+					}
+					String title = pages.get(id);
+					if (title == null || isSpecialPage(title)) {
+						nontraite++;
+					} else {
+						Long next = linkParser.getFirstLink(title, text.toString());
+						if (next == null) {
+							if (linkParser.isRedirect(text.toString())) {
+								redirect++;
+							} else {
+								FileUtils.writeStringToFile(err, "\n###########################################################\n", "UTF-8", true);
+								FileUtils.writeStringToFile(err, "Page " + id + " = " + title + " -> Next Not Found\n" + text + "\n", "UTF-8", true);
+								FileUtils.writeStringToFile(listerr, title + "\n", "UTF-8", true);
+								ko++;
+							}
+						} else {
+							FileUtils.writeStringToFile(out, id + SEP_LIEN + title + SEP_LIEN + next + SEP_LIEN + pages.get(next) + "\n", "UTF-8", true);
+							ok++;
+						}
+					}
+				}
+			}
+		}
 
-            XMLEvent event = xmler.nextEvent();
-            if (event.isStartElement()) {
-                String name = event.asStartElement().getName().toString();
-                if (name.endsWith("}page")) {
-                    cpt++;
-                    if (cpt % 50000 == 0) {
-                        System.out.print("Parsing article " + cpt);
-                        long elapse = System.currentTimeMillis() - split;
-                        System.out.println("    " + (elapse / 1000) + "s - " + (50000 * 1000L / elapse) + " articles/s");
-                        split = System.currentTimeMillis();
-                    }
+		long duration = System.currentTimeMillis() - start;
+		System.out.println("***********************************");
+		System.out.println("**     " + cpt + " articles chargés");
+		System.out.println("**     " + nontraite + " lignes ignorées");
+		System.out.println("**     " + redirect + " redirects ignorés");
+		System.out.println("**     " + ko + " articles sans lien trouvé");
+		System.out.println("**     " + ok + " liens trouvés");
+		System.out.println("**     " + duration / 1000 + " sec");
+		System.out.println("**     " + cpt * 1000L / duration + " lignes/s");
+		System.out.println("***********************************");
+	}
 
-                    //if (cpt > 100000) break;
-                    Long id = null;
-                    StringBuilder text = null;
-                    while (true) {
-                        event = xmler.nextEvent();
-                        if (event.isStartElement()) {
-                            name = event.asStartElement().getName().toString();
-                            if ((id == null) && name.endsWith("id")) {
-                                event = xmler.nextEvent();
-                                id = Long.parseLong(event.asCharacters().getData());
-                            } else if (name.endsWith("text")) {
-                                event = xmler.nextEvent();
-                                text = new StringBuilder();
-                                while (event.isCharacters()) {
-                                    text.append(event.asCharacters().getData());
-                                    event = xmler.nextEvent();
-                                }
-                                break;
-                            }
-                        }
-                    }
-                    String title = pages.get(id);
-                    if (title == null || isSpecialPage(title)) {
-                        nontraite++;
-                    } else {
-                        Long next = linkParser.getFirstLink(title, text.toString());
-                        if (next == null) {
-                            if (linkParser.isRedirect(text.toString())) {
-                                redirect++;
-                            } else {
-                                FileUtils.writeStringToFile(err, "\n###########################################################\n", "UTF-8", true);
-                                FileUtils.writeStringToFile(err, "Page " + id + " = " + title + " -> Next Not Found\n" + text + "\n", "UTF-8", true);
-                                FileUtils.writeStringToFile(listerr, title + "\n", "UTF-8", true);
-                                ko++;
-                            }
-                        } else {
-                            FileUtils.writeStringToFile(out, id + SEP_LIEN + title + SEP_LIEN + next + SEP_LIEN + pages.get(next) + "\n", "UTF-8", true);
-                            ok++;
-                        }
-                    }
-                }
-            }
-        }
+	public static void step3(String wiki) throws IOException {
+		System.out.println("**************************************");
+		System.out.println("**     Step 3 - Generating cycle file ");
+		System.out.println("**************************************");
 
-        long duration = System.currentTimeMillis() - start;
-        System.out.println("***********************************");
-        System.out.println("**     " + cpt + " articles chargés");
-        System.out.println("**     " + nontraite + " lignes ignorées");
-        System.out.println("**     " + redirect + " redirects ignorés");
-        System.out.println("**     " + ko + " articles sans lien trouvé");
-        System.out.println("**     " + ok + " liens trouvés");
-        System.out.println("**     " + duration / 1000 + " sec");
-        System.out.println("**     " + cpt * 1000L / duration + " lignes/s");
-        System.out.println("***********************************");
-    }
+		File in = new File(root + wiki + "-firstlink.txt");
+		File out = new File(root + wiki + "-cycles.txt");
 
-    public static void step3(String wiki) throws IOException {
-        System.out.println("**************************************");
-        System.out.println("**     Step 3 - Generating cycle file ");
-        System.out.println("**************************************");
+		System.out.println("Fichier en entrée " + in.getAbsolutePath());
+		System.out.println("Fichier en sortie " + out.getAbsolutePath());
 
-        File in = new File(root + wiki + "-firstlink.txt");
-        File out = new File(root + wiki + "-cycles.txt");
-
-        System.out.println("Fichier en entrée " + in.getAbsolutePath());
-        System.out.println("Fichier en sortie " + out.getAbsolutePath());
-
-        Map<String, String> map = getGraph(in);
-        int cpt = 0;
+		Map<String, String> map = getGraph(in);
+		int cpt = 0;
         int philo = 0;
-        int other = 0;
 
-        long start = System.currentTimeMillis();
-        long split = start;
-        
+		long start = System.currentTimeMillis();
+		long split = start;
 
-        int longestPathToOther = 0;
-        String longestPathToOtherPage = null;
+		int longestPath = 0;
+		String longestPathPage = null;
+		Map<String, List<String>> allLoops = new HashMap<>();
+		Map<String, Integer> sizeLoops = new HashMap<>();
 
-        int longestPathToPhilo = 0;
-        String longestPathToPhiloPage = null;
-        		
-        for (String root : map.keySet()) {
-            cpt++;
-            //if (cpt >= 10000) break;
-            if (cpt % 50000 == 0) {
-                System.out.print("Parsing article " + cpt);
-                long elapse = System.currentTimeMillis() - split;
-                System.out.println("    " + (elapse / 1000) + "s - " + (50000 * 1000L / elapse) + " articles/s");
-                split = System.currentTimeMillis();
-            }
+		for (String root : map.keySet()) {
+			cpt++;
+			// if (cpt >= 10000) break;
+			if (cpt % 50000 == 0) {
+				System.out.print("Parsing article " + cpt);
+				long elapse = System.currentTimeMillis() - split;
+				System.out.println("    " + (elapse / 1000) + "s - " + (50000 * 1000L / elapse) + " articles/s");
+				split = System.currentTimeMillis();
+			}
 
-            List<String> res = containsLoop(root, map);
-            
- 
+			List<String> path = containsLoop(root, map);
 
-            if (res.contains("Philosophie")) {
+			String loop = existingLoop(path, allLoops);
+			if (loop == null) {
+				String key = path.get(path.size() - 1);
+				allLoops.put(key, path);
+				sizeLoops.put(key, 1);
+			} else {
+				sizeLoops.put(loop, sizeLoops.get(loop) + 1);
+			}
+
+			if (path.size() > longestPath) {
+				longestPath = path.size();
+				longestPathPage = root;
+			}
+
+		    if (path.contains("Philosophie")) {
                 philo++;
-                if (res.size()>longestPathToPhilo) {
-                	longestPathToPhilo = res.size();
-                	longestPathToPhiloPage = root;
-                }
-            } else {
-                other++;
-                if (res.size()>longestPathToOther) {
-                	longestPathToOther = res.size();
-                	longestPathToOtherPage = root;
-                }           
-            }
-            FileUtils.writeStringToFile(out, dump(res), "UTF-8", true);
-            FileUtils.writeStringToFile(out, "\n", "UTF-8", true);
-        }
+		    }
+			FileUtils.writeStringToFile(out, dump(path), "UTF-8", true);
+			FileUtils.writeStringToFile(out, "\n", "UTF-8", true);
+		}
 
-
-        long duration = System.currentTimeMillis() - start;
-        System.out.println("***********************************");
-        System.out.println("**     " + cpt + " articles chargés");
+		
+		long duration = System.currentTimeMillis() - start;
+		System.out.println("***********************************");
+		System.out.println("**     " + cpt + " articles chargés");
         System.out.println("**     " + philo + " articles mènent vers Philosophie");
         System.out.println("**     " + 100. * philo / cpt + " %");
-        System.out.println("**     " + other + " articles ne mènent pas vers Philosophie");
-        System.out.println("**     " + 100. * other / cpt + " %");
-        System.out.println("**     " + duration / 1000 + " sec");
-        System.out.println("**     " + cpt * 1000L / duration + " lignes/s");
-        System.out.println("***********************************");
-        System.out.println("**     Longest path to philo " + longestPathToPhilo + " for "+longestPathToPhiloPage);
-        System.out.println("**     Longest path to other " + longestPathToOther + " for "+longestPathToOtherPage);        
-        System.out.println("***********************************");
-        
+		System.out.println("**     " + duration / 1000 + " sec");
+		System.out.println("**     " + cpt * 1000L / duration + " lignes/s");
+		System.out.println("***********************************");
+		System.out.println("**     Longest path " + longestPath + " for " + longestPathPage);
+		System.out.println("***********************************");
 
-    }
+		for(String key:allLoops.keySet()) {
+			if (sizeLoops.get(key) > 1000)
+				System.out.println(sizeLoops.get(key)+ " - " + allLoops.get(key));
+		}
+	}
 
-    /**
-     * Renvoie true si la page est une page spéciale (qui sera ignorée)
-     */
-    private static boolean isSpecialPage(String line) {
-        if (line.contains("Catégorie:")) return true;
-        if (line.contains("Projet:")) return true;
-        if (line.contains("Sujet:")) return true;
-        if (line.contains("Wikipédia:")) return true;
-        if (line.contains("Modèle:")) return true;
-        if (line.contains("Fichier:")) return true;
-        if (line.contains("Portail:")) return true;
-        if (line.contains("MediaWiki:")) return true;
-        if (line.contains("Référence:")) return true;
-        if (line.contains("Aide:")) return true;
-        if (line.contains("Module:")) return true;
-        
-        // Pour wikipedia la
-        if (line.contains("Categoria:")) return true;
-        if (line.contains("Formula:")) return true;
-        if (line.contains("Vicipaedia:")) return true;
-        if (line.contains("Porta:")) return true;
-        
-        
-        
-        return false;
-    }
+	private static String existingLoop(List<String> path, Map<String, List<String>> allLoops) {
+		for (String key : allLoops.keySet()) {
+			if (path.contains(key)) return key;
+		}
+		return null;
+	}
 
+	/**
+	 * Renvoie true si la page est une page spéciale (qui sera ignorée)
+	 */
+	private static boolean isSpecialPage(String line) {
+		if (line.contains("Catégorie:")) return true;
+		if (line.contains("Projet:")) return true;
+		if (line.contains("Sujet:")) return true;
+		if (line.contains("Wikipédia:")) return true;
+		if (line.contains("Modèle:")) return true;
+		if (line.contains("Fichier:")) return true;
+		if (line.contains("Portail:")) return true;
+		if (line.contains("MediaWiki:")) return true;
+		if (line.contains("Référence:")) return true;
+		if (line.contains("Aide:")) return true;
+		if (line.contains("Module:")) return true;
 
-    /**
-     * Charge une map contenant le premier lien de chaque page.
-     */
-    public static Map<String, String> getGraph(File f) throws IOException {
+		// Pour wikipedia la
+		if (line.contains("Categoria:")) return true;
+		if (line.contains("Formula:")) return true;
+		if (line.contains("Vicipaedia:")) return true;
+		if (line.contains("Porta:")) return true;
 
-        Map<String, String> res = new HashMap<String, String>();
+		return false;
+	}
 
-        Iterator<String> it = FileUtils.lineIterator(f, "UTF-8");
-        int cpt = 0;
-        while (it.hasNext()) {
-            String s = it.next();
-            String[] t = s.split("#");
-            // On ignore les id.
-            res.put(t[1], t[3]);
-            cpt++;
-        }
+	/**
+	 * Charge une map contenant le premier lien de chaque page.
+	 */
+	public static Map<String, String> getGraph(File f) throws IOException {
 
-        return res;
-    }
+		Map<String, String> res = new HashMap<String, String>();
 
-    private static String dump(List<String> list) {
-        StringBuilder sb = new StringBuilder();
-        for (String s : list) {
-            sb.append(SEP_CYCLE);
-            sb.append(s);
-        }
-        return sb.substring(SEP_CYCLE.length()).toString();
-    }
+		Iterator<String> it = FileUtils.lineIterator(f, "UTF-8");
+		int cpt = 0;
+		while (it.hasNext()) {
+			String s = it.next();
+			String[] t = s.split("#");
+			// On ignore les id.
+			res.put(t[1], t[3]);
+			cpt++;
+		}
 
+		return res;
+	}
 
-    /**
-     * Identifie un cycle dans la liste chainée passée en paramètre.
-     *
-     * @param root La racine de la liste.
-     * @return le cycle.
-     */
-    public static List<String> containsLoop(String root, Map<String, String> map) {
-        List<String> res = new ArrayList<String>();
-        res.add(root);
+	private static String dump(List<String> list) {
+		StringBuilder sb = new StringBuilder();
+		for (String s : list) {
+			sb.append(SEP_CYCLE);
+			sb.append(s);
+		}
+		return sb.substring(SEP_CYCLE.length()).toString();
+	}
 
-        String tortue = map.get(root);
-        if (tortue == null) return res;
-        res.add(tortue);
+	/**
+	 * Identifie un cycle dans la liste chainée passée en paramètre.
+	 *
+	 * @param root
+	 *            La racine de la liste.
+	 * @return le cycle.
+	 */
+	public static List<String> containsLoop(String root, Map<String, String> map) {
+		List<String> res = new ArrayList<String>();
+		res.add(root);
 
-        String lievre = map.get(tortue);
-        res.add(lievre);
-        if (lievre == null) return res;
+		String tortue = map.get(root);
+		if (tortue == null) return res;
+		res.add(tortue);
 
-        while (tortue != lievre) {
-            if (lievre == null || map.get(lievre) == null) return res;
-            tortue = map.get(tortue);
+		String lievre = map.get(tortue);
+		res.add(lievre);
+		if (lievre == null) return res;
 
-            lievre = map.get(lievre);
-            res.add(lievre);
-            lievre = map.get(lievre);
-            res.add(lievre);
-        }
+		while (tortue != lievre) {
+			if (lievre == null || map.get(lievre) == null) return res;
+			tortue = map.get(tortue);
 
-        // Il existe une boucle. On va cherche le début de la boucle
-        res = new ArrayList<String>();
-        tortue = root;
+			lievre = map.get(lievre);
+			res.add(lievre);
+			lievre = map.get(lievre);
+			res.add(lievre);
+		}
 
-        while (tortue != lievre) {
-            res.add(tortue);
-            tortue = map.get(tortue);
-            lievre = map.get(lievre);
-        }
+		// Il existe une boucle. On va cherche le début de la boucle
+		res = new ArrayList<String>();
+		tortue = root;
 
-        res.add(lievre);
-        lievre = map.get(lievre);
-        while (tortue != lievre) {
-            res.add(lievre);
-            lievre = map.get(lievre);
-        }
+		while (tortue != lievre) {
+			res.add(tortue);
+			tortue = map.get(tortue);
+			lievre = map.get(lievre);
+		}
 
-        return res;
-    }
+		res.add(lievre);
+		lievre = map.get(lievre);
+		while (tortue != lievre) {
+			res.add(lievre);
+			lievre = map.get(lievre);
+		}
+
+		return res;
+	}
 
 }
