@@ -23,6 +23,7 @@ public class LinkParserTest {
         dict.put("Internationale situationniste", 10L);
         dict.put("Rouen", 11L);
         dict.put("Personne morale en droit français", 12L);
+        dict.put("Tour de la communauté de Madrid", 13L);
         fixture = new LinkParser(dict);
     }
 
@@ -146,8 +147,15 @@ public class LinkParserTest {
     }
 
     @Test
-    public void test1() {
+    public void testRedirect2() {
         String text = "#REDIRECT [[Internationale situationniste]]";
+        Assert.assertEquals(Long.valueOf(10L), fixture.getFirstLink(TITLE, text));
+
+    }
+    
+    @Test
+    public void testRedirection() {
+        String text = "#REDIRECTION [[Internationale situationniste]]";
         Assert.assertEquals(Long.valueOf(10L), fixture.getFirstLink(TITLE, text));
 
     }
@@ -394,6 +402,19 @@ public class LinkParserTest {
     	String text = "L''''''X''''' est [[Page1]]";
         Assert.assertEquals(Long.valueOf(1L), fixture.getFirstLink(TITLE, text));
 
+    }
+    
+    @Test
+    public void testProWrestlingNOAH() {
+    	String text = "{{japonais|'''Pro Wrestling NOAH'''|プロレスリング・ノア}} est une fédération de [[Page1]] ";
+        Assert.assertEquals(Long.valueOf(1L), fixture.getFirstLink(TITLE, text));    			
+    }
+    
+    
+    @Test
+    public void testTourCommunauteMadrid() {
+    	String text = "#REDIRECTION[[Tour de la communauté de Madrid]]\n\n[[Catégorie:Cacographie (casse)]]";
+        Assert.assertEquals(Long.valueOf(13L), fixture.getFirstLink(TITLE, text));    			
     }
     
     

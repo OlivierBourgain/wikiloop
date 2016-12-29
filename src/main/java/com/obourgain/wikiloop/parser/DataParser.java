@@ -111,6 +111,8 @@ public class DataParser {
 				System.out.println("Duplicate " + title);
 				ko++;
 			} else if (isSpecialPage(title)) {
+				pages.put(id, title);
+				dict.put(title, id);
 				special++;
 			} else {
 				pages.put(id, title);
