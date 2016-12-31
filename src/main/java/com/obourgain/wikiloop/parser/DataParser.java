@@ -32,7 +32,7 @@ public class DataParser {
 	 * Emplacement et nom de l'export à traiter.
 	 */
 	private static final String root = "data/";
-	private static final String wiki = "frwiki-20161220";
+	private static final String wiki = "frwiki-20160901";
 
 	/**
 	 * Estimation du nombre d'articles. Utilisé pour tailler les structures de
@@ -50,8 +50,6 @@ public class DataParser {
 	 * wiki + "err.txt" contenant les pages pour lesquels le premier lien n'est
 	 * pas trouvé.
 	 * wiki + "successeurs.txt" contenant le premier lien de chaque page.
-	 * wiki + "cycles.txt" contenant le détail de la chaine de page pour chaque
-	 * page.
 	 */
 
 	public static final String SEP_LIEN = "#";
@@ -101,7 +99,7 @@ public class DataParser {
 		int special = 0;
 		while (it.hasNext()) {
 			cpt++;
-			if (cpt % 100000 == 0) System.out.println("Loading line " + cpt);
+			if (cpt % 200000 == 0) System.out.println("Loading line " + cpt);
 			String line = it.next();
 			int i1 = line.indexOf(":");
 			int i2 = line.indexOf(":", i1 + 1);
@@ -163,10 +161,10 @@ public class DataParser {
 				String name = event.asStartElement().getName().toString();
 				if (name.endsWith("}page")) {
 					cpt++;
-					if (cpt % 50000 == 0) {
+					if (cpt % 100000 == 0) {
 						System.out.print("Parsing article " + cpt);
 						long elapse = System.currentTimeMillis() - split;
-						System.out.println("    " + (elapse / 1000) + "s - " + (50000 * 1000L / elapse) + " articles/s");
+						System.out.println("    " + (elapse / 1000) + "s - " + (100000 * 1000L / elapse) + " articles/s");
 						split = System.currentTimeMillis();
 					}
 
@@ -232,7 +230,7 @@ public class DataParser {
 		System.out.println("**************************************");
 
 		File in = new File(root + wiki + "-firstlink.txt");
-		File out = new File(root + wiki + "-cycles.txt");
+		File out = new File(root + wiki + "-bestcycles.txt");
 
 		System.out.println("Fichier en entrée " + in.getAbsolutePath());
 		System.out.println("Fichier en sortie " + out.getAbsolutePath());
@@ -278,11 +276,18 @@ public class DataParser {
 		    if (path.contains("Philosophie")) {
                 philo++;
 		    }
-			FileUtils.writeStringToFile(out, dump(path), "UTF-8", true);
-			FileUtils.writeStringToFile(out, "\n", "UTF-8", true);
 		}
 
-		
+		System.out.println("Dumping cycles with > 1000 pages...");
+	    for(String key:allLoops.keySet()) {
+				if (sizeLoops.get(key) > 1000) {
+					FileUtils.writeStringToFile(out, sizeLoops.get(key)+ " - " + allLoops.get(key), "UTF-8", true);
+					FileUtils.writeStringToFile(out, "\n", "UTF-8", true);
+				}
+				
+			}
+		System.out.println("Done...");
+
 		long duration = System.currentTimeMillis() - start;
 		System.out.println("***********************************");
 		System.out.println("**     " + cpt + " articles chargés");
@@ -294,10 +299,7 @@ public class DataParser {
 		System.out.println("**     Longest path " + longestPath + " for " + longestPathPage);
 		System.out.println("***********************************");
 
-		for(String key:allLoops.keySet()) {
-			if (sizeLoops.get(key) > 1000)
-				System.out.println(sizeLoops.get(key)+ " - " + allLoops.get(key));
-		}
+		
 	}
 
 	private static String existingLoop(List<String> path, Map<String, List<String>> allLoops) {
